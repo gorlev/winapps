@@ -84,21 +84,53 @@ Note: The officially configured application list below is fueled by the communit
 
 ## Installation
 
-### Step 1: Set up a Windows Virtual Machine
+### **Step 1: Set up a Windows Virtual Machine**
 The best solution for running a VM as a subsystem for WinApps would be KVM. KVM is a CPU and memory-efficient virtualization engine bundled with most major Linux distributions. To set up the VM for WinApps, follow this guide:
 
 - [Creating a Virtual Machine in KVM](docs/KVM.md)
 
 If you already have a Virtual Machine or server you wish to use with WinApps, you will need to merge `kvm/RDPApps.reg` into the VM's Windows Registry. If this VM is in KVM and you want to use auto-IP detection, you will need to name the machine `RDPWindows`. Directions for both of these can be found in the guide linked above.
+ 
+### **Step 2: Download the repo and prerequisites**
 
-### Step 2: Download the repo and prerequisites
-To get things going, use:
-``` bash
-sudo apt-get install -y freerdp2-x11
-git clone https://github.com/Fmstrat/winapps.git
-cd winapps
-```
-### Step 3: Creating your WinApps configuration file
+
+<details><summary><b>Debian/Ubuntu:</b></summary>
+
+  ``` bash
+  sudo apt-get install -y freerdp2-x11
+  git clone https://github.com/Fmstrat/winapps.git
+  cd winapps
+  ```
+</details>
+
+<details><summary><b>Arch:</b></summary>
+
+  ```bash
+  # Installing the dependencies
+  sudo pacman -S qemu virt-manager virt-viewer xrdp freerdp dnsmasq vde2 bridge-utils openbsd-netcat libguestfs ebtables iptables bc --noconfirm --needed
+
+  # Editing the configuration files
+  echo '''
+  unix_sock_rw_perms = "0770"
+  unix_sock_group = "libvirt"
+  ''' | sudo tee -a /etc/libvirt/libvirtd.conf &>/dev/null
+
+  mkdir -p ~/.config/libvirt/
+  echo 'uri_default = "qemu:///system"' >> ~/.config/libvirt/libvirt.conf
+
+  # Adding user yo libvirt group
+  newgrp libvirt
+  sudo usermod -aG libvirt (whoami)
+
+  #Downloading WinApps Repo
+  git clone https://github.com/Fmstrat/winapps.git
+  ```
+</details>
+
+
+
+
+### **Step 3: Creating your WinApps configuration file**
 You will need to create a `~/.config/winapps/winapps.conf` configuration file with the following information in it:
 ``` bash
 RDP_USER="MyWindowsUser"
@@ -107,7 +139,7 @@ RDP_PASS="MyWindowsPassword"
 #RDP_IP="192.168.123.111"
 #RDP_SCALE=100
 #RDP_FLAGS=""
-#MULTIMON="true"
+#MULTIMON="true" #Uncomment this if you are using Arch
 #DEBUG="true"
 ```
 The username and password should be a full user account and password, such as the one created when setting up Windows or a domain user. It cannot be a user/PIN combination as those are not valid for RDP access.
